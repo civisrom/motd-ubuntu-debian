@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-echo "Hi! This script will install custom MOTD for your Debian"
+echo "Hi! This script will install custom MOTD for your Ubuntu"
 read -p "Continue? [Y/n] " -r REPLY
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -29,14 +29,12 @@ then
 	# Move unzipped motd files to /etc
 	echo "Installing motd"
 	mv motd-ubuntu-debian-main/motd/* /etc/update-motd.d > /dev/null 2>&1
-	rm -f /etc/motd > /dev/null 2>&1
-	ln -sf /var/run/motd /etc/motd > /dev/null 2>&1
 	echo "Setting permissions"
-	chmod +x /etc/update-motd.d/* > /dev/null 2>&1
+	chmod +x /etc/update-motd.d/*
 
 	# Clean up downloaded files
 	echo "Cleaning up"
-	rm -rf motd-ubuntu-debian-main > /dev/null 2>&1
+	rm -rf motd-ubuntu-debian-main
 	rm -- "$0"
 	echo "Done!"
 else
