@@ -1,5 +1,5 @@
 #!/bin/bash
-clear
+#clear
 echo "Hi! This script will install custom MOTD for your Debian"
 read -p "Continue? [Y/n] " -r REPLY
 if [[ $REPLY =~ ^[Yy]$ ]]
