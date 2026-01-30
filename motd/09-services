@@ -58,15 +58,15 @@ print_wrap() {
     local line_length=0
     for element in "$@"; do
         element="${element} |"
-        local visible_elelement future_length
-        visible_elelement=$(strip_ansi "${element}")
-        future_length=$((line_length + ${#visible_elelement}))
+        local visible_element future_length
+        visible_element=$(strip_ansi "${element}")
+        future_length=$((line_length + ${#visible_element}))
         if [[ ${line_length} -ne 0 && ${future_length} -gt ${width} ]]; then
             out+="\n"
             line_length=0
         fi
         out+="${element} "
-        line_length=$((line_length + ${#visible_elelement}))
+        line_length=$((line_length + ${#visible_element}))
     done
     [[ -n "${out}" ]] && echo "${out::-2}"
 }
@@ -79,14 +79,14 @@ strip_ansi() {
 
 statuses=()
 for key in "${services_order[@]}"; do
-    if [ $key = "ufw" ] && command -v ufw 2>&1 >/dev/null; then
+    if [ "$key" = "ufw" ] && command -v ufw >/dev/null 2>&1; then
         if sudo ufw status | grep -q "Status: active"; then
             statuses+=("$(print_status "${services[${key}]} - active" "active")")
         else
             statuses+=("$(print_status "${services[${key}]} - inactive" "inactive")")
         fi
-    elif [ $key = "marzban" ] && command -v marzban 2>&1 >/dev/null; then
-        if sudo marzban status | ansi2txt |grep -q "marzban: running"; then
+    elif [ "$key" = "marzban" ] && command -v marzban >/dev/null 2>&1; then
+        if sudo marzban status | ansi2txt | grep -q "marzban: running"; then
             statuses+=("$(print_status "${services[${key}]}" "active")")
         else
             statuses+=("$(print_status "${services[${key}]}" "inactive")")

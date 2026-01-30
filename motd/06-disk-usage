@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 source /etc/update-motd.d/colors.txt
 
@@ -6,4 +7,11 @@ AVAIL="$(df --output=avail -h / | tail -1 | xargs)"
 USED="$(df --output=used -h / | tail -1 | xargs)"
 TOTAL="$(df --output=size -h / | tail -1 | xargs)"
 
-echo -e " ${TITLE_COLOR}Disk................:${NC} Used: ${TEXT_COLOR}$(echo $USED | sed s/[A-Z]*//g)${NC} $(echo $USED | sed s/[^a-zA-Z]*//g)B | Free: ${TEXT_COLOR}$(echo $AVAIL | sed s/[A-Z]*//g)${NC} $(echo $AVAIL | sed s/[^a-zA-Z]*//g)B | Total: ${TEXT_COLOR}$(echo $TOTAL | sed s/[A-Z]*//g)${NC} $(echo $TOTAL | sed s/[^a-zA-Z]*//g)B"
+USED_NUM=$(echo "$USED" | sed 's/[A-Z]*//g')
+USED_UNIT=$(echo "$USED" | sed 's/[^a-zA-Z]*//g')
+AVAIL_NUM=$(echo "$AVAIL" | sed 's/[A-Z]*//g')
+AVAIL_UNIT=$(echo "$AVAIL" | sed 's/[^a-zA-Z]*//g')
+TOTAL_NUM=$(echo "$TOTAL" | sed 's/[A-Z]*//g')
+TOTAL_UNIT=$(echo "$TOTAL" | sed 's/[^a-zA-Z]*//g')
+
+echo -e " ${TITLE_COLOR}Disk................:${NC} Used: ${TEXT_COLOR}${USED_NUM}${NC} ${USED_UNIT}B | Free: ${TEXT_COLOR}${AVAIL_NUM}${NC} ${AVAIL_UNIT}B | Total: ${TEXT_COLOR}${TOTAL_NUM}${NC} ${TOTAL_UNIT}B"

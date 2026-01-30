@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 source /etc/update-motd.d/colors.txt
 
@@ -9,4 +10,14 @@ os_desc=$(lsb_release -d | cut -f2-)
 kernel_ver=$(uname -r)
 
 echo -e " ${TITLE_COLOR}OS and Kernel.......:${NC} ${TEXT_COLOR}${os_desc}, Kernel ${kernel_ver}${NC}"
-echo -e " ${TITLE_COLOR}Last login..........:${NC} ${TEXT_COLOR}$(last | head -1 | cut -c 1-9 | xargs)${DEFAULT_COLOR} at ${TEXT_COLOR}$(last | head -1 | cut -c 40-55 | xargs)${DEFAULT_COLOR} from ${TEXT_COLOR}$(last | head -1 | cut -c 23-39 | xargs)${NC}"
+
+# Parse last login information using awk
+last_login_info=$(last -1 -w | head -1)
+if [[ -n "$last_login_info" ]]; then
+    login_user=$(echo "$last_login_info" | awk '{print $1}')
+    login_time=$(echo "$last_login_info" | awk '{print $4, $5, $6, $7}')
+    login_from=$(echo "$last_login_info" | awk '{print $3}')
+    echo -e " ${TITLE_COLOR}Last login..........:${NC} ${TEXT_COLOR}${login_user}${DEFAULT_COLOR} at ${TEXT_COLOR}${login_time}${DEFAULT_COLOR} from ${TEXT_COLOR}${login_from}${NC}"
+else
+    echo -e " ${TITLE_COLOR}Last login..........:${NC} ${TEXT_COLOR}No login history${NC}"
+fi

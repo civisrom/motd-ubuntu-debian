@@ -1,4 +1,6 @@
 #!/bin/bash
+set -uo pipefail
+
 source /etc/update-motd.d/colors.txt
 
 # Разделитель
@@ -22,7 +24,7 @@ fi
 echo -e " ${TITLE_COLOR}Hostname............:${NC} ${TEXT_COLOR}$(hostname)${NC}"
 
 # Внешний IP
-external_ip=$(curl -s ifconfig.me 2>/dev/null)
+external_ip=$(curl -s --max-time 2 ifconfig.me 2>/dev/null || echo "")
 if [[ -z "$external_ip" ]]; then
     external_ip="Unavailable (check internet)"
 fi
