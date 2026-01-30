@@ -32,6 +32,16 @@ then
 	echo "Setting permissions"
 	chmod +x /etc/update-motd.d/*
 
+	# Prompt for custom name
+	echo ""
+	read -p "Enter your name for MOTD header: " -r MOTD_NAME
+	if [ -n "$MOTD_NAME" ]; then
+		sed -i "s/you name/$MOTD_NAME/g" /etc/update-motd.d/00-header
+		echo "MOTD name set to: $MOTD_NAME"
+	else
+		echo "No name provided, keeping default 'you name'"
+	fi
+
 	# Clean up downloaded files
 	echo "Cleaning up"
 	rm -rf motd-ubuntu-debian-main
