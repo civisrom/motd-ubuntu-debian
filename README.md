@@ -1,118 +1,120 @@
-# Custom MOTD for Ubuntu/Debian
+# Кастомный MOTD для Ubuntu/Debian
 
-Customizable Message of the Day (MOTD) for Ubuntu and Debian servers with system information display.
+[English version](README_EN.md)
 
-## Features
+Настраиваемое приветственное сообщение (MOTD) для серверов Ubuntu и Debian с отображением системной информации.
 
-- **Custom Header** - Personalized ASCII art banner with your name
-- **System Information** - Real-time display of:
-  - Last login information
-  - System uptime
-  - CPU load average
-  - Memory usage (used/free/total)
-  - Disk usage (used/free/total)
-  - Active user logins
-  - Running processes
-  - Service status (Marzban, Caddy, vnStat, UFW)
-- **Colorized Output** - Color-coded information for better readability
-- **Automatic Backup** - Old MOTD files are backed up before installation
+## Возможности
 
-## Installation
+- **Персональный заголовок** - ASCII-баннер с вашим именем
+- **Системная информация** - Отображение в реальном времени:
+  - Информация о последнем входе
+  - Время работы системы
+  - Средняя загрузка процессора
+  - Использование памяти (используется/свободно/всего)
+  - Использование диска (используется/свободно/всего)
+  - Активные пользователи в системе
+  - Запущенные процессы
+  - Статус сервисов (Marzban, Caddy, vnStat, UFW)
+- **Цветной вывод** - Цветовая кодировка информации для лучшей читаемости
+- **Автоматический бэкап** - Старые файлы MOTD сохраняются перед установкой
 
-### For Ubuntu:
+## Установка
+
+### Для Ubuntu:
 ```bash
 curl -L https://raw.githubusercontent.com/civisrom/motd-ubuntu-debian/refs/heads/main/scripts/ubuntu.sh > motd_install.sh && sudo chmod +x motd_install.sh && sudo ./motd_install.sh
 ```
 
-### For Debian:
+### Для Debian:
 ```bash
 curl -L https://raw.githubusercontent.com/civisrom/motd-ubuntu-debian/refs/heads/main/scripts/debian.sh > motd_install.sh && sudo chmod +x motd_install.sh && sudo ./motd_install.sh
 ```
 
-During installation, you will be prompted to:
-1. Confirm installation (press Enter or Y to continue)
-2. Enter your custom name for the MOTD header (max 50 characters)
+В процессе установки вам будет предложено:
+1. Подтвердить установку (нажмите Enter или Y для продолжения)
+2. Ввести свое имя для заголовка MOTD (максимум 50 символов)
 
-## Requirements
+## Требования
 
-- Root/sudo access
-- `curl` for downloading
-- Packages (installed automatically):
-  - `toilet` - for ASCII art text
-  - `colorized-logs` - for color support
+- Root/sudo доступ
+- `curl` для загрузки
+- Пакеты (устанавливаются автоматически):
+  - `toilet` - для создания ASCII-текста
+  - `colorized-logs` - для поддержки цветов
 
-## What Gets Installed
+## Что устанавливается
 
-The script will:
-1. Install required packages
-2. Backup existing MOTD to `/etc/update-motd.d/old-motd`
-3. Install new MOTD scripts to `/etc/update-motd.d/`
-4. Set executable permissions
-5. Configure custom header name
+Скрипт выполняет:
+1. Установку необходимых пакетов
+2. Резервное копирование существующего MOTD в `/etc/update-motd.d/old-motd`
+3. Установку новых скриптов MOTD в `/etc/update-motd.d/`
+4. Настройку прав доступа
+5. Конфигурацию пользовательского имени в заголовке
 
-## MOTD Components
+## Компоненты MOTD
 
-| File | Description |
-|------|-------------|
-| `00-header` | Custom ASCII art header with your name |
-| `01-last-login` | Last login information |
-| `03-uptime` | System uptime |
-| `04-load-average` | CPU load average |
-| `05-memory` | Memory usage statistics |
-| `06-disk-usage` | Disk space usage |
-| `07-logins` | Current user logins |
-| `08-processes` | Running processes count |
-| `09-services` | Service status monitoring |
-| `10-docker` | Docker containers (disabled by default) |
-| `99-footer` | Footer spacing |
+| Файл | Описание |
+|------|----------|
+| `00-header` | Кастомный ASCII-заголовок с вашим именем |
+| `01-last-login` | Информация о последнем входе |
+| `03-uptime` | Время работы системы |
+| `04-load-average` | Средняя загрузка процессора |
+| `05-memory` | Статистика использования памяти |
+| `06-disk-usage` | Использование дискового пространства |
+| `07-logins` | Текущие входы пользователей |
+| `08-processes` | Количество запущенных процессов |
+| `09-services` | Мониторинг состояния сервисов |
+| `10-docker` | Docker контейнеры (по умолчанию отключено) |
+| `99-footer` | Нижний отступ |
 
-## Customization
+## Настройка
 
-### Changing Your Name
-Edit `/etc/update-motd.d/00-header` and replace the text in the toilet command:
+### Изменение имени
+Отредактируйте `/etc/update-motd.d/00-header` и замените текст в команде toilet:
 ```bash
 sudo nano /etc/update-motd.d/00-header
-# Change the name in: toilet -d /etc/update-motd.d/ -f ivrit "your name"
+# Измените имя в строке: toilet -d /etc/update-motd.d/ -f ivrit "ваше имя"
 ```
 
-### Enabling Docker Monitoring
-Uncomment lines in `/etc/update-motd.d/10-docker`:
+### Включение мониторинга Docker
+Раскомментируйте строки в `/etc/update-motd.d/10-docker`:
 ```bash
 sudo nano /etc/update-motd.d/10-docker
-# Remove the '#' from the beginning of each line
+# Удалите символ '#' в начале каждой строки
 ```
 
-### Adding Custom Services
-Edit `/etc/update-motd.d/09-services` to add your services:
+### Добавление своих сервисов
+Отредактируйте `/etc/update-motd.d/09-services` для добавления своих сервисов:
 ```bash
-services["your-service"]="Service Name"
-services_order+=("your-service")
+services["ваш-сервис"]="Название сервиса"
+services_order+=("ваш-сервис")
 ```
 
-### Customizing Colors
-Edit `/etc/update-motd.d/colors.txt` to change color scheme.
+### Настройка цветов
+Отредактируйте `/etc/update-motd.d/colors.txt` для изменения цветовой схемы.
 
-## Security Features
+## Функции безопасности
 
-- Root privilege verification
-- Input validation (name length, special characters)
-- Secure sed operations with pipe delimiters
-- Error handling for download/extraction failures
-- Safe file backup operations
+- Проверка прав root
+- Валидация ввода (длина имени, специальные символы)
+- Безопасные операции sed с разделителем pipe
+- Обработка ошибок при загрузке/распаковке
+- Безопасное резервное копирование файлов
 
-## Uninstallation
+## Удаление
 
-To restore original MOTD:
+Для восстановления оригинального MOTD:
 ```bash
 sudo rm -rf /etc/update-motd.d/*
 sudo mv /etc/update-motd.d/old-motd/* /etc/update-motd.d/
 sudo rmdir /etc/update-motd.d/old-motd
 ```
 
-## License
+## Лицензия
 
-Free to use and modify.
+Свободное использование и модификация.
 
-## Author
+## Автор
 
 civisrom
