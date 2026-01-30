@@ -1,9 +1,16 @@
 #!/bin/bash
+set -uo pipefail
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+	echo "Error: This script must be run as root (use sudo)"
+	exit 1
+fi
+
 #clear
 echo "Hi! This script will install custom MOTD for your Ubuntu"
 read -p "Continue? [Y/n] " -r REPLY
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 	# Install packages
 	echo "Installing utilities (this may take up to 10 seconds):"
 	echo -n "    - updating repos....."
@@ -19,12 +26,15 @@ then
 
 	# Download the archive
 	echo "Downloading motd"
-	curl -L https://github.com/civisrom/motd-ubuntu-debian/archive/refs/heads/main.tar.gz 2>/dev/null | tar -zxv > /dev/null
+	if ! curl -L https://github.com/civisrom/motd-ubuntu-debian/archive/refs/heads/main.tar.gz 2>/dev/null | tar -zxv > /dev/null; then
+		echo "Error: Failed to download or extract archive"
+		exit 1
+	fi
 
 	# Move old motd files to directory
 	echo "Backing up old motd to /etc/update-motd.d/old-motd"
-	mkdir /etc/update-motd.d/old-motd
-	mv /etc/update-motd.d/* /etc/update-motd.d/old-motd > /dev/null 2>&1
+	mkdir -p /etc/update-motd.d/old-motd
+	find /etc/update-motd.d/ -maxdepth 1 -type f -exec mv {} /etc/update-motd.d/old-motd/ \; 2>/dev/null || true
 
 	# Move unzipped motd files to /etc
 	echo "Installing motd"
@@ -36,8 +46,22 @@ then
 	echo ""
 	read -p "Enter your name for MOTD header: " -r MOTD_NAME
 	if [ -n "$MOTD_NAME" ]; then
-		sed -i "s/you name/$MOTD_NAME/g" /etc/update-motd.d/00-header
-		echo "MOTD name set to: $MOTD_NAME"
+		# Remove newlines and carriage returns
+		MOTD_NAME=$(echo "$MOTD_NAME" | tr -d '\n\r')
+
+		# Limit length to 50 characters
+		if [ ${#MOTD_NAME} -gt 50 ]; then
+			echo "Warning: Name too long, truncating to 50 characters"
+			MOTD_NAME="${MOTD_NAME:0:50}"
+		fi
+
+		# Replace name in header file
+		if [ -f "/etc/update-motd.d/00-header" ]; then
+			sed -i "s|you name|$MOTD_NAME|g" /etc/update-motd.d/00-header
+			echo "MOTD name set to: $MOTD_NAME"
+		else
+			echo "Warning: 00-header file not found"
+		fi
 	else
 		echo "No name provided, keeping default 'you name'"
 	fi
