@@ -1,5 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 
 source /etc/update-motd.d/colors.txt
 
-echo -e " ${TITLE_COLOR}Memory..............:${DEFAULT_COLOR} Used: ${TEXT_COLOR}$(free -m | grep Mem: | xargs | cut -f3 -d' ')${DEFAULT_COLOR} MB | Free: ${TEXT_COLOR}$(free -m | grep Mem: | xargs | cut -f7 -d' ')${DEFAULT_COLOR} MB | Total: ${TEXT_COLOR}$(free -m | grep Mem: | xargs | cut -f2 -d' ')${DEFAULT_COLOR} MB"
+MEM_USED=$(free -m | awk '/^Mem:/ {print $3}')
+MEM_FREE=$(free -m | awk '/^Mem:/ {print $7}')
+MEM_TOTAL=$(free -m | awk '/^Mem:/ {print $2}')
+
+echo -e " ${TITLE_COLOR}Memory..............:${DEFAULT_COLOR} Used: ${TEXT_COLOR}${MEM_USED}${DEFAULT_COLOR} MB | Free: ${TEXT_COLOR}${MEM_FREE}${DEFAULT_COLOR} MB | Total: ${TEXT_COLOR}${MEM_TOTAL}${DEFAULT_COLOR} MB"

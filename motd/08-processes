@@ -1,5 +1,9 @@
 #!/bin/bash
+set -euo pipefail
 
 source /etc/update-motd.d/colors.txt
 
-echo -e " ${TITLE_COLOR}Processes...........:${NC} ${TEXT_COLOR}$(ps -ef | wc -l)${DEFAULT_COLOR} running processes"
+# Count processes excluding header line
+PROCESS_COUNT=$(ps -ef | tail -n +2 | wc -l)
+
+echo -e " ${TITLE_COLOR}Processes...........:${NC} ${TEXT_COLOR}${PROCESS_COUNT}${DEFAULT_COLOR} running processes"

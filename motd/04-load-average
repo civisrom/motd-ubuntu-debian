@@ -1,5 +1,6 @@
 #!/bin/bash
+set -euo pipefail
 
 source /etc/update-motd.d/colors.txt
 
-echo -e " ${TITLE_COLOR}Load Averages.......:${DEFAULT_COLOR} 1 min: ${TEXT_COLOR}$(cat /proc/loadavg | cut -f1 -d' ')%${DEFAULT_COLOR} | 5 mins: ${TEXT_COLOR}$(cat /proc/loadavg | cut -f2 -d' ')%${DEFAULT_COLOR} | 15 mins: ${TEXT_COLOR}$(cat /proc/loadavg | cut -f3 -d' ')%${NC}"
+echo -e " ${TITLE_COLOR}Load Averages.......:${DEFAULT_COLOR} 1 min: ${TEXT_COLOR}$(awk '{print $1}' /proc/loadavg)${DEFAULT_COLOR} | 5 mins: ${TEXT_COLOR}$(awk '{print $2}' /proc/loadavg)${DEFAULT_COLOR} | 15 mins: ${TEXT_COLOR}$(awk '{print $3}' /proc/loadavg)${NC}"
