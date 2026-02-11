@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 # Maintain proper order when adding items to services_order
 declare -A services
 declare -a services_order
@@ -30,7 +28,7 @@ WIDTH="${WIDTH:-100}"
 # $1 - left column
 # $2 - right column
 print_columns() {
-    [[ -z $2 ]] && return
+    [[ -z ${2:-} ]] && return
     paste <(echo -e "${CN}$1${1:+:}${CN}") <(echo -e "$2")
 }
 
@@ -80,26 +78,27 @@ strip_ansi() {
 statuses=()
 for key in "${services_order[@]}"; do
     if [ "$key" = "ufw" ] && command -v ufw >/dev/null 2>&1; then
-        if sudo ufw status | grep -q "Status: active"; then
+        if sudo -n ufw status 2>/dev/null | grep -q "Status: active"; then
             statuses+=("$(print_status "${services[${key}]} - active" "active")")
         else
             statuses+=("$(print_status "${services[${key}]} - inactive" "inactive")")
         fi
     elif [ "$key" = "marzban" ] && command -v marzban >/dev/null 2>&1; then
-        if sudo marzban status | ansi2txt | grep -q "marzban: running"; then
+        if sudo -n marzban status 2>/dev/null | ansi2txt 2>/dev/null | grep -q "marzban: running"; then
             statuses+=("$(print_status "${services[${key}]}" "active")")
         else
             statuses+=("$(print_status "${services[${key}]}" "inactive")")
         fi
     else
-        if [[ $(systemctl list-unit-files "${key}*" | wc -l) -gt 3 ]]; then
-            status=$(systemctl show -p ActiveState --value "${key}")
+        if [[ $(systemctl list-unit-files "${key}*" 2>/dev/null | wc -l) -gt 3 ]]; then
+            status=$(systemctl show -p ActiveState --value "${key}" 2>/dev/null || echo "inactive")
             statuses+=("$(print_status "${services[${key}]}" "${status}")")
         fi
     fi
 done
 
-text="\b"
-text+=$(print_wrap "${WIDTH}" "${statuses[@]}")
-
-print_columns " Services............" "${text}"
+if [[ ${#statuses[@]} -gt 0 ]]; then
+    text="\b"
+    text+=$(print_wrap "${WIDTH}" "${statuses[@]}")
+    print_columns " Services............" "${text}"
+fi
