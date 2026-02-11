@@ -52,9 +52,21 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 		exit 1
 	fi
 
-	# Enable dynamic MOTD on Debian
+	# Disable duplicate MOTD display by SSH daemon
+	echo "Configuring SSH"
+	if [ -f /etc/ssh/sshd_config ]; then
+		if grep -q "^PrintMotd" /etc/ssh/sshd_config; then
+			sed -i 's/^PrintMotd.*/PrintMotd no/' /etc/ssh/sshd_config
+		elif grep -q "^#PrintMotd" /etc/ssh/sshd_config; then
+			sed -i 's/^#PrintMotd.*/PrintMotd no/' /etc/ssh/sshd_config
+		else
+			echo "PrintMotd no" >> /etc/ssh/sshd_config
+		fi
+	fi
+
+	# Remove static /etc/motd to prevent duplicate display via pam_motd noupdate
 	rm -f /etc/motd 2>/dev/null
-	ln -sf /run/motd.dynamic /etc/motd 2>/dev/null
+	touch /etc/motd
 
 	# Verify critical files were installed
 	if [ ! -f "/etc/update-motd.d/colors.txt" ] || [ ! -f "/etc/update-motd.d/00-header" ]; then
