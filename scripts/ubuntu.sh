@@ -40,7 +40,8 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 	echo "Installing motd"
 	mv motd-ubuntu-debian-main/motd/* /etc/update-motd.d > /dev/null 2>&1
 	echo "Setting permissions"
-	chmod +x /etc/update-motd.d/*
+	chmod 755 /etc/update-motd.d/[0-9][0-9]-*
+	chmod 644 /etc/update-motd.d/colors.txt /etc/update-motd.d/ivrit.flf
 
 	# Prompt for custom name
 	echo ""
