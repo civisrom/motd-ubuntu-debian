@@ -1,10 +1,9 @@
 #!/bin/bash
-set -euo pipefail
 
-source /etc/update-motd.d/colors.txt
+source /etc/update-motd.d/colors.txt 2>/dev/null || true
 
 MEM_USED=$(free -m | awk '/^Mem:/ {print $3}')
 MEM_FREE=$(free -m | awk '/^Mem:/ {print $7}')
 MEM_TOTAL=$(free -m | awk '/^Mem:/ {print $2}')
 
-echo -e " ${TITLE_COLOR}Memory..............:${DEFAULT_COLOR} Used: ${TEXT_COLOR}${MEM_USED}${DEFAULT_COLOR} MB | Free: ${TEXT_COLOR}${MEM_FREE}${DEFAULT_COLOR} MB | Total: ${TEXT_COLOR}${MEM_TOTAL}${DEFAULT_COLOR} MB"
+echo -e " ${TITLE_COLOR}Memory..............:${DEFAULT_COLOR} Used: ${TEXT_COLOR}${MEM_USED}${DEFAULT_COLOR} MB | Free: ${TEXT_COLOR}${MEM_FREE}${DEFAULT_COLOR} MB | Total: ${TEXT_COLOR}${MEM_TOTAL}${NC} MB${NC}"

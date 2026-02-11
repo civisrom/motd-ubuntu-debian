@@ -1,13 +1,12 @@
 #!/bin/bash
-set -uo pipefail
 
-source /etc/update-motd.d/colors.txt
+source /etc/update-motd.d/colors.txt 2>/dev/null || true
 
 # Разделитель
 divider="--------------------------------------------------"
 
 # Последние 4 входа с IP
-last_logins=$(last -i | awk '!/wtmp/{if ($3 ~ /^[0-9]+\./) print $1, $4, $5, $6, $7, $3}' | head -n 4)
+last_logins=$(last -i 2>/dev/null | awk '!/wtmp/{if ($3 ~ /^[0-9]+\./) print $1, $4, $5, $6, $7, $3}' | head -n 4)
 
 if [[ -n "$last_logins" ]]; then
     i=1
@@ -32,7 +31,7 @@ echo -e " ${TITLE_COLOR}External IP.........:${NC} ${TEXT_COLOR}$external_ip${NC
 
 # Локальные интерфейсы (IPv4 + IPv6), исключая Docker
 echo -e " ${TITLE_COLOR}Local Interfaces....:${NC}"
-for iface in $(ip -o link show | awk -F': ' '{print $2}' | grep -vE '^(lo|docker[0-9]*|br-|veth)'); do
+for iface in $(ip -o link show 2>/dev/null | awk -F': ' '{print $2}' | grep -vE '^(lo|docker[0-9]*|br-|veth)'); do
     ipv4=$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet /{print $2}' | xargs)
     ipv6=$(ip -6 addr show "$iface" 2>/dev/null | awk '/inet6 /{print $2}' | xargs)
     [[ -z "$ipv4" ]] && ipv4="No IPv4"
@@ -41,17 +40,17 @@ for iface in $(ip -o link show | awk -F': ' '{print $2}' | grep -vE '^(lo|docker
 done
 
 # Loopback
-lo_ipv4=$(ip -4 addr show lo | awk '/inet /{print $2}' | xargs || echo "No IPv4")
-lo_ipv6=$(ip -6 addr show lo | awk '/inet6 /{print $2}' | xargs || echo "No IPv6")
+lo_ipv4=$(ip -4 addr show lo 2>/dev/null | awk '/inet /{print $2}' | xargs || echo "No IPv4")
+lo_ipv6=$(ip -6 addr show lo 2>/dev/null | awk '/inet6 /{print $2}' | xargs || echo "No IPv6")
 printf " ${DEFAULT_COLOR}  %-10s:${TEXT_COLOR} %s ${DEFAULT_COLOR}|${TEXT_COLOR} %s${NC}\n" "lo" "$lo_ipv4" "$lo_ipv6"
 
 echo -e "${divider}"
 
 # Частота CPU
-cpu_freq=$(grep -m1 "cpu MHz" /proc/cpuinfo | awk '{print $4}')
+cpu_freq=$(grep -m1 "cpu MHz" /proc/cpuinfo 2>/dev/null | awk '{print $4}')
 
 # Информация об ОС
-os_name=$(lsb_release -ds 2>/dev/null || cat /etc/os-release | grep -m1 PRETTY_NAME | cut -d= -f2 | tr -d '"')
+os_name=$(lsb_release -ds 2>/dev/null || grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "Unknown OS")
 
 # Проверка SSL-сертификатов с сортировкой, CN и пометкой Expired
 echo -e " ${TITLE_COLOR}SSL Certificates....:${NC}"
@@ -67,8 +66,10 @@ for dir in "${cert_dirs[@]}"; do
             if [[ -n "$end_date" ]]; then
                 end_ts=$(date -d "$end_date" +%s 2>/dev/null)
                 now_ts=$(date +%s)
-                days_left=$(( (end_ts - now_ts) / 86400 ))
-                cert_list+="${end_ts}|${cert}|${end_date}|${days_left}|${cn_name}\n"
+                if [[ -n "$end_ts" ]]; then
+                    days_left=$(( (end_ts - now_ts) / 86400 ))
+                    cert_list+="${end_ts}|${cert}|${end_date}|${days_left}|${cn_name}\n"
+                fi
             fi
         done < <(find "$dir" -type f \( -name "*.crt" -o -name "*.pem" \) -print0 2>/dev/null)
     fi
@@ -76,6 +77,7 @@ done
 
 if [[ -n "$cert_list" ]]; then
     echo -e "$cert_list" | sort -n -t"|" -k1 | uniq | while IFS="|" read -r end_ts cert end_date days_left cn_name; do
+        [[ -z "$end_ts" ]] && continue
         filename=$(basename "$cert")
         if (( days_left < 0 )); then
             color="${RED_COLOR}"

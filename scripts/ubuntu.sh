@@ -22,12 +22,21 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 	echo -n "    - colorized-logs....."
 	apt install colorized-logs -y >> /dev/null 2>&1
 	echo "done"
+	echo -n "    - lsb-release........"
+	apt install lsb-release -y >> /dev/null 2>&1
+	echo "done"
 	echo "Utilities installed successfully"
 
 	# Download the archive
 	echo "Downloading motd"
 	if ! curl -L https://github.com/civisrom/motd-ubuntu-debian/archive/refs/heads/main.tar.gz 2>/dev/null | tar -zxv > /dev/null; then
 		echo "Error: Failed to download or extract archive"
+		exit 1
+	fi
+
+	# Verify extracted files exist
+	if [ ! -d "motd-ubuntu-debian-main/motd" ]; then
+		echo "Error: Archive does not contain expected motd directory"
 		exit 1
 	fi
 
@@ -38,7 +47,17 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 
 	# Move unzipped motd files to /etc
 	echo "Installing motd"
-	mv motd-ubuntu-debian-main/motd/* /etc/update-motd.d > /dev/null 2>&1
+	if ! mv motd-ubuntu-debian-main/motd/* /etc/update-motd.d/; then
+		echo "Error: Failed to install MOTD files"
+		exit 1
+	fi
+
+	# Verify critical files were installed
+	if [ ! -f "/etc/update-motd.d/colors.txt" ] || [ ! -f "/etc/update-motd.d/00-header" ]; then
+		echo "Error: MOTD files were not installed correctly"
+		exit 1
+	fi
+
 	echo "Setting permissions"
 	chmod 755 /etc/update-motd.d/[0-9][0-9]-*
 	chmod 644 /etc/update-motd.d/colors.txt /etc/update-motd.d/ivrit.flf
