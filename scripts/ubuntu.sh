@@ -58,6 +58,22 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 		exit 1
 	fi
 
+	# Disable duplicate MOTD display by SSH daemon
+	echo "Configuring SSH"
+	if [ -f /etc/ssh/sshd_config ]; then
+		if grep -q "^PrintMotd" /etc/ssh/sshd_config; then
+			sed -i 's/^PrintMotd.*/PrintMotd no/' /etc/ssh/sshd_config
+		elif grep -q "^#PrintMotd" /etc/ssh/sshd_config; then
+			sed -i 's/^#PrintMotd.*/PrintMotd no/' /etc/ssh/sshd_config
+		else
+			echo "PrintMotd no" >> /etc/ssh/sshd_config
+		fi
+	fi
+
+	# Remove static /etc/motd to prevent duplicate display via pam_motd noupdate
+	rm -f /etc/motd 2>/dev/null
+	touch /etc/motd
+
 	echo "Setting permissions"
 	chmod 755 /etc/update-motd.d/[0-9][0-9]-*
 	chmod 644 /etc/update-motd.d/colors.txt /etc/update-motd.d/ivrit.flf
