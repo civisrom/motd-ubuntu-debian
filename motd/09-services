@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source /etc/update-motd.d/colors.txt 2>/dev/null || true
+
 # Maintain proper order when adding items to services_order
 declare -A services
 declare -a services_order
@@ -16,10 +18,10 @@ services_order+=("vnstat")
 services["ufw"]="UFW"
 services_order+=("ufw")
 
-# Colors
-CO="${CO:-\e[32m}"
-CE="${CE:-\e[31m}"
-CN="${CN:-\e[0m}"
+# Colors (use colors.txt values with fallbacks)
+CO="${TEXT_COLOR:-\e[32m}"
+CE="${RED_COLOR:-\e[31m}"
+CN="${NC:-\e[0m}"
 
 # Max width used for components in second column
 WIDTH="${WIDTH:-100}"
@@ -32,7 +34,7 @@ print_columns() {
     paste <(echo -e "${CN}$1${1:+:}${CN}") <(echo -e "$2")
 }
 
-# Prints text as either acitve or inactive
+# Prints text as either active or inactive
 # $1 - text to print
 # $2 - literal "active" or "inactive"
 print_status() {
@@ -72,7 +74,7 @@ print_wrap() {
 # Strips ANSI color codes from given string
 # $1 - text to strip
 strip_ansi() {
-    echo -e "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+    echo -e "$1" | sed -r "s/\x1B\[[0-9;]*[mK]//g"
 }
 
 statuses=()

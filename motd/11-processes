@@ -6,7 +6,7 @@ source /etc/update-motd.d/colors.txt 2>/dev/null || true
 divider="--------------------------------------------------"
 
 # Последние 4 входа с IP
-last_logins=$(last -i 2>/dev/null | awk '!/wtmp/{if ($3 ~ /^[0-9]+\./) print $1, $4, $5, $6, $7, $3}' | head -n 4)
+last_logins=$(last -i 2>/dev/null | awk '!/wtmp|reboot|shutdown/{if ($3 ~ /^[0-9]/ || $3 ~ /^[a-f0-9]*:/) print $1, $4, $5, $6, $7, $3}' | head -n 4)
 
 if [[ -n "$last_logins" ]]; then
     i=1
@@ -46,12 +46,6 @@ printf " ${DEFAULT_COLOR}  %-10s:${TEXT_COLOR} %s ${DEFAULT_COLOR}|${TEXT_COLOR}
 
 echo -e "${divider}"
 
-# Частота CPU
-cpu_freq=$(grep -m1 "cpu MHz" /proc/cpuinfo 2>/dev/null | awk '{print $4}')
-
-# Информация об ОС
-os_name=$(lsb_release -ds 2>/dev/null || grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "Unknown OS")
-
 # Проверка SSL-сертификатов с сортировкой, CN и пометкой Expired
 echo -e " ${TITLE_COLOR}SSL Certificates....:${NC}"
 cert_dirs=("/etc/ssl" "/etc/letsencrypt")
@@ -61,7 +55,7 @@ for dir in "${cert_dirs[@]}"; do
     if [[ -d "$dir" ]]; then
         while IFS= read -r -d '' cert; do
             end_date=$(openssl x509 -enddate -noout -in "$cert" 2>/dev/null | cut -d= -f2)
-            cn_name=$(openssl x509 -in "$cert" -noout -subject 2>/dev/null | sed -n 's/^subject=.*CN=\([^/]*\).*$/\1/p')
+            cn_name=$(openssl x509 -in "$cert" -noout -subject 2>/dev/null | sed -n 's/.*CN\s*=\s*\([^,/]*\).*/\1/p')
             [[ -z "$cn_name" ]] && cn_name="Unknown"
             if [[ -n "$end_date" ]]; then
                 end_ts=$(date -d "$end_date" +%s 2>/dev/null)
