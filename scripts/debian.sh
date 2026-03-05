@@ -82,8 +82,8 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 	echo ""
 	read -p "Enter your name for MOTD header: " -r MOTD_NAME
 	if [ -n "$MOTD_NAME" ]; then
-		# Remove newlines and carriage returns
-		MOTD_NAME=$(echo "$MOTD_NAME" | tr -d '\n\r')
+		# Remove newlines, carriage returns and sed-unsafe characters
+		MOTD_NAME=$(echo "$MOTD_NAME" | tr -d '\n\r' | sed 's/[|&/\\]/\\&/g')
 
 		# Limit length to 50 characters
 		if [ ${#MOTD_NAME} -gt 50 ]; then
@@ -93,7 +93,7 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 
 		# Replace name in header file
 		if [ -f "/etc/update-motd.d/00-header" ]; then
-			sed -i "s|you name|$MOTD_NAME|g" /etc/update-motd.d/00-header
+			sed -i "s|you name|${MOTD_NAME}|g" /etc/update-motd.d/00-header
 			echo "MOTD name set to: $MOTD_NAME"
 		else
 			echo "Warning: 00-header file not found"

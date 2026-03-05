@@ -3,7 +3,11 @@
 source /etc/update-motd.d/colors.txt 2>/dev/null || true
 
 # Получаем описание ОС (например, Ubuntu 20.04.6 LTS)
-os_desc=$(lsb_release -d 2>/dev/null | cut -f2- || grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "Unknown OS")
+os_desc=$(lsb_release -d 2>/dev/null | cut -f2-)
+if [[ -z "$os_desc" ]]; then
+    os_desc=$(grep -m1 PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+fi
+os_desc="${os_desc:-Unknown OS}"
 
 # Получаем версию ядра
 kernel_ver=$(uname -r 2>/dev/null || echo "Unknown")
@@ -12,7 +16,7 @@ echo -e " ${TITLE_COLOR}OS and Kernel.......:${NC} ${TEXT_COLOR}${os_desc}, Kern
 
 # Parse last login information using awk
 last_login_info=$(last -1 -w 2>/dev/null | head -1)
-if [[ -n "$last_login_info" ]]; then
+if [[ -n "$last_login_info" && "$last_login_info" != *"wtmp begins"* ]]; then
     login_user=$(echo "$last_login_info" | awk '{print $1}')
     login_time=$(echo "$last_login_info" | awk '{print $4, $5, $6, $7}')
     login_from=$(echo "$last_login_info" | awk '{print $3}')

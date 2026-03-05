@@ -2,15 +2,13 @@
 
 source /etc/update-motd.d/colors.txt 2>/dev/null || true
 
-AVAIL="$(df --output=avail -h / | tail -1 | xargs)"
-USED="$(df --output=used -h / | tail -1 | xargs)"
-TOTAL="$(df --output=size -h / | tail -1 | xargs)"
+read -r USED AVAIL TOTAL <<< "$(df --output=used,avail,size -h / | tail -1 | xargs)"
 
-USED_NUM=$(echo "$USED" | sed 's/[A-Z]*//g')
-USED_UNIT=$(echo "$USED" | sed 's/[^a-zA-Z]*//g')
-AVAIL_NUM=$(echo "$AVAIL" | sed 's/[A-Z]*//g')
-AVAIL_UNIT=$(echo "$AVAIL" | sed 's/[^a-zA-Z]*//g')
-TOTAL_NUM=$(echo "$TOTAL" | sed 's/[A-Z]*//g')
-TOTAL_UNIT=$(echo "$TOTAL" | sed 's/[^a-zA-Z]*//g')
+USED_NUM="${USED//[a-zA-Z]/}"
+USED_UNIT="${USED//[^a-zA-Z]/}"
+AVAIL_NUM="${AVAIL//[a-zA-Z]/}"
+AVAIL_UNIT="${AVAIL//[^a-zA-Z]/}"
+TOTAL_NUM="${TOTAL//[a-zA-Z]/}"
+TOTAL_UNIT="${TOTAL//[^a-zA-Z]/}"
 
-echo -e " ${TITLE_COLOR}Disk................:${NC} Used: ${TEXT_COLOR}${USED_NUM}${NC} ${USED_UNIT}B | Free: ${TEXT_COLOR}${AVAIL_NUM}${NC} ${AVAIL_UNIT}B | Total: ${TEXT_COLOR}${TOTAL_NUM}${NC} ${TOTAL_UNIT}B${NC}"
+echo -e " ${TITLE_COLOR}Disk................:${DEFAULT_COLOR} Used: ${TEXT_COLOR}${USED_NUM}${DEFAULT_COLOR} ${USED_UNIT}B | Free: ${TEXT_COLOR}${AVAIL_NUM}${DEFAULT_COLOR} ${AVAIL_UNIT}B | Total: ${TEXT_COLOR}${TOTAL_NUM}${DEFAULT_COLOR} ${TOTAL_UNIT}B${NC}"
