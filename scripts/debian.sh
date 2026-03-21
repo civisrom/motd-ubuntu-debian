@@ -25,9 +25,6 @@ if [[ $REPLY =~ ^[Yy]?$ ]] || [ -z "$REPLY" ]; then
 	echo -n "    - lsb-release........"
 	apt install lsb-release -y >> /dev/null 2>&1
 	echo "done"
-	echo -n "    - util-linux-extra..."
-	apt install util-linux-extra -y >> /dev/null 2>&1
-	echo "done"
 	echo "Utilities installed successfully"
 
 	# Download the archive
