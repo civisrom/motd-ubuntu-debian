@@ -15,11 +15,39 @@ kernel_ver=$(uname -r 2>/dev/null || echo "Unknown")
 echo -e " ${TITLE_COLOR}OS and Kernel.......:${NC} ${TEXT_COLOR}${os_desc}, Kernel ${kernel_ver}${NC}"
 
 # Parse last login information using awk
+login_user=""
+login_time=""
+login_from=""
+
+# Try 'last' command first (reads /var/log/wtmp)
 last_login_info=$(last -1 -w 2>/dev/null | head -1)
 if [[ -n "$last_login_info" && "$last_login_info" != *"wtmp begins"* ]]; then
     login_user=$(echo "$last_login_info" | awk '{print $1}')
     login_time=$(echo "$last_login_info" | awk '{print $4, $5, $6, $7}')
     login_from=$(echo "$last_login_info" | awk '{print $3}')
+fi
+
+# Fallback: try 'lastlog' if 'last' returned nothing (Debian 13+ may not have wtmp)
+if [[ -z "$login_user" ]]; then
+    lastlog_info=$(lastlog 2>/dev/null | awk 'NR>1 && $2 != "**Never" {print; exit}')
+    if [[ -n "$lastlog_info" ]]; then
+        login_user=$(echo "$lastlog_info" | awk '{print $1}')
+        login_from=$(echo "$lastlog_info" | awk '{print $3}')
+        login_time=$(echo "$lastlog_info" | awk '{print $4, $5, $6, $7}')
+    fi
+fi
+
+# Fallback: try journalctl for SSH logins
+if [[ -z "$login_user" ]]; then
+    journal_line=$(journalctl _COMM=sshd --no-pager -q -n 100 2>/dev/null | grep "Accepted" | tail -1)
+    if [[ -n "$journal_line" ]]; then
+        login_user=$(echo "$journal_line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
+        login_from=$(echo "$journal_line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
+        login_time=$(echo "$journal_line" | awk '{print $1, $2, $3}')
+    fi
+fi
+
+if [[ -n "$login_user" ]]; then
     echo -e " ${TITLE_COLOR}Last login..........:${NC} ${TEXT_COLOR}${login_user}${DEFAULT_COLOR} at ${TEXT_COLOR}${login_time}${DEFAULT_COLOR} from ${TEXT_COLOR}${login_from}${NC}"
 else
     echo -e " ${TITLE_COLOR}Last login..........:${NC} ${TEXT_COLOR}No login history${NC}"
