@@ -32,8 +32,8 @@ if [[ -z "$login_user" && -f /var/log/wtmp ]]; then
     who_line=$(who /var/log/wtmp 2>/dev/null | tail -1)
     if [[ -n "$who_line" ]]; then
         login_user=$(echo "$who_line" | awk '{print $1}')
-        login_time=$(echo "$who_line" | awk '{print $3, $4}')
-        login_from=$(echo "$who_line" | awk '{print $5}' | tr -d '()')
+        login_time=$(echo "$who_line" | awk '{print $3, $4, $5}')
+        login_from=$(echo "$who_line" | sed -n 's/.*(\([^)]*\)).*/\1/p')
     fi
 fi
 

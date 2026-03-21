@@ -10,7 +10,12 @@ last_logins=$(last -i 2>/dev/null | awk '!/wtmp|reboot|shutdown/{if ($3 ~ /^[0-9
 
 # Fallback: 'who /var/log/wtmp' if 'last' not installed (Debian 13+ util-linux-extra)
 if [[ -z "$last_logins" && -f /var/log/wtmp ]]; then
-    last_logins=$(who /var/log/wtmp 2>/dev/null | awk '{ip=$5; gsub(/[()]/, "", ip); if (ip ~ /^[0-9]/ || ip ~ /^[a-f0-9]*:/) print $1, $3, $4, "-", "-", ip}' | tail -n 4)
+    last_logins=$(who /var/log/wtmp 2>/dev/null | while IFS= read -r line; do
+        w_user=$(echo "$line" | awk '{print $1}')
+        w_date=$(echo "$line" | awk '{print $3, $4, $5}')
+        w_ip=$(echo "$line" | sed -n 's/.*(\([^)]*\)).*/\1/p')
+        [[ -n "$w_ip" ]] && echo "$w_user - $w_date $w_ip"
+    done | tail -n 4)
 fi
 
 # Fallback: try /var/log/auth.log for SSH logins
@@ -21,7 +26,7 @@ if [[ -z "$last_logins" && -f /var/log/auth.log ]]; then
             j_user=$(echo "$line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
             j_ip=$(echo "$line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
             j_time=$(echo "$line" | awk '{print $1, $2, $3}')
-            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user $j_time - - $j_ip"
+            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user - $j_time $j_ip"
         done)
     fi
 fi
@@ -34,7 +39,7 @@ if [[ -z "$last_logins" ]]; then
             j_user=$(echo "$line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
             j_ip=$(echo "$line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
             j_time=$(echo "$line" | awk '{print $1, $2, $3}')
-            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user $j_time - - $j_ip"
+            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user - $j_time $j_ip"
         done)
     fi
 fi
