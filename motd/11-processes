@@ -8,7 +8,30 @@ divider="--------------------------------------------------"
 # Последние 4 входа с IP
 last_logins=$(last -i 2>/dev/null | awk '!/wtmp|reboot|shutdown/{if ($3 ~ /^[0-9]/ || $3 ~ /^[a-f0-9]*:/) print $1, $4, $5, $6, $7, $3}' | head -n 4)
 
-# Fallback: try journalctl for SSH logins if 'last' returned nothing (Debian 13+ may not have wtmp)
+# Fallback: 'who /var/log/wtmp' if 'last' not installed (Debian 13+ util-linux-extra)
+if [[ -z "$last_logins" && -f /var/log/wtmp ]]; then
+    last_logins=$(who /var/log/wtmp 2>/dev/null | while IFS= read -r line; do
+        w_user=$(echo "$line" | awk '{print $1}')
+        w_date=$(echo "$line" | awk '{print $3, $4, $5}')
+        w_ip=$(echo "$line" | sed -n 's/.*(\([^)]*\)).*/\1/p')
+        [[ -n "$w_ip" ]] && echo "$w_user - $w_date $w_ip"
+    done | tail -n 4)
+fi
+
+# Fallback: try /var/log/auth.log for SSH logins
+if [[ -z "$last_logins" && -f /var/log/auth.log ]]; then
+    auth_logins=$(grep "Accepted" /var/log/auth.log 2>/dev/null | tail -4)
+    if [[ -n "$auth_logins" ]]; then
+        last_logins=$(echo "$auth_logins" | while IFS= read -r line; do
+            j_user=$(echo "$line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
+            j_ip=$(echo "$line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
+            j_time=$(echo "$line" | awk '{print $1, $2, $3}')
+            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user - $j_time $j_ip"
+        done)
+    fi
+fi
+
+# Fallback: try journalctl for SSH logins
 if [[ -z "$last_logins" ]]; then
     journal_logins=$(journalctl _COMM=sshd --no-pager -q -n 200 2>/dev/null | grep "Accepted" | tail -4)
     if [[ -n "$journal_logins" ]]; then
@@ -16,7 +39,7 @@ if [[ -z "$last_logins" ]]; then
             j_user=$(echo "$line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
             j_ip=$(echo "$line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
             j_time=$(echo "$line" | awk '{print $1, $2, $3}')
-            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user $j_time - - $j_ip"
+            [[ -n "$j_user" && -n "$j_ip" ]] && echo "$j_user - $j_time $j_ip"
         done)
     fi
 fi

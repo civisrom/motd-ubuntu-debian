@@ -14,7 +14,7 @@ kernel_ver=$(uname -r 2>/dev/null || echo "Unknown")
 
 echo -e " ${TITLE_COLOR}OS and Kernel.......:${NC} ${TEXT_COLOR}${os_desc}, Kernel ${kernel_ver}${NC}"
 
-# Parse last login information using awk
+# Parse last login information
 login_user=""
 login_time=""
 login_from=""
@@ -27,13 +27,33 @@ if [[ -n "$last_login_info" && "$last_login_info" != *"wtmp begins"* ]]; then
     login_from=$(echo "$last_login_info" | awk '{print $3}')
 fi
 
-# Fallback: try 'lastlog' if 'last' returned nothing (Debian 13+ may not have wtmp)
+# Fallback: 'who /var/log/wtmp' if 'last' not installed (Debian 13+ util-linux-extra)
+if [[ -z "$login_user" && -f /var/log/wtmp ]]; then
+    who_line=$(who /var/log/wtmp 2>/dev/null | tail -1)
+    if [[ -n "$who_line" ]]; then
+        login_user=$(echo "$who_line" | awk '{print $1}')
+        login_time=$(echo "$who_line" | awk '{print $3, $4, $5}')
+        login_from=$(echo "$who_line" | sed -n 's/.*(\([^)]*\)).*/\1/p')
+    fi
+fi
+
+# Fallback: try 'lastlog' command
 if [[ -z "$login_user" ]]; then
     lastlog_info=$(lastlog 2>/dev/null | awk 'NR>1 && $2 != "**Never" {print; exit}')
     if [[ -n "$lastlog_info" ]]; then
         login_user=$(echo "$lastlog_info" | awk '{print $1}')
         login_from=$(echo "$lastlog_info" | awk '{print $3}')
         login_time=$(echo "$lastlog_info" | awk '{print $4, $5, $6, $7}')
+    fi
+fi
+
+# Fallback: try /var/log/auth.log for SSH logins
+if [[ -z "$login_user" && -f /var/log/auth.log ]]; then
+    auth_line=$(grep "Accepted" /var/log/auth.log 2>/dev/null | tail -1)
+    if [[ -n "$auth_line" ]]; then
+        login_user=$(echo "$auth_line" | sed -n 's/.*Accepted .* for \([^ ]*\) from .*/\1/p')
+        login_from=$(echo "$auth_line" | sed -n 's/.*from \([^ ]*\) port .*/\1/p')
+        login_time=$(echo "$auth_line" | awk '{print $1, $2, $3}')
     fi
 fi
 
