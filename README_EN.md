@@ -1,3 +1,5 @@
+This project is based on [motd](https://github.com/Skrepysh/motd).
+
 # Custom MOTD for Ubuntu/Debian
 
 [Русская версия](README.md)
